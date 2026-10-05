@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shiguangji.app.appGraph
@@ -176,14 +177,19 @@ fun CategoriesScreen() {
                         Text("新建栏目", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = sg.brand)
                     }
                 }
-                item {
-                    Text(
-                        "删除栏目时，里面的记录不会被删掉，只是回到「未分类」。",
-                        fontSize = 11.5.sp, color = sg.ink3, lineHeight = 18.sp,
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                    )
-                }
             }
+            // 说明文字独立于网格，整行居中放在页面底部，不再和「新建栏目」并排成两个框
+            Text(
+                "删除栏目时，里面的记录不会被删掉，只是回到「未分类」。",
+                fontSize = 11.5.sp, color = sg.ink3, lineHeight = 18.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(
+                        start = 40.dp, end = 40.dp,
+                        bottom = 18.dp + WindowInsets.navigationBars
+                            .asPaddingValues().calculateBottomPadding()
+                    )
+            )
         }
     }
 

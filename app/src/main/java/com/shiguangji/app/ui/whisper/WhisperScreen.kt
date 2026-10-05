@@ -42,6 +42,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -96,7 +97,7 @@ internal object WhisperNight {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WhisperScreen() {
+fun WhisperScreen(pageFocused: Boolean = true) {
     val graph = LocalContext.current.appGraph
     val sg = LocalSg.current
     val toast = rememberToast()
@@ -107,7 +108,15 @@ fun WhisperScreen() {
     Box(Modifier.fillMaxSize().background(sg.paper)) {
         var unlocked by remember { mutableStateOf(graph.pinManager.sessionUnlocked) }
 
-        // 自动上锁：离开悄悄话页、或 App 退到后台，立即回到锁定态
+        // 主页面在 Pager 里常驻：滑去别的页时立即上锁（原“离页自动上锁”的等价实现）
+        LaunchedEffect(pageFocused) {
+            if (!pageFocused) {
+                graph.pinManager.sessionUnlocked = false
+                unlocked = false
+            }
+        }
+
+        // 自动上锁：App 退到后台，立即回到锁定态
         val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
         DisposableEffect(owner) {
             val observer = LifecycleEventObserver { _, event ->
@@ -275,7 +284,7 @@ internal fun PinShell(
         Spacer(Modifier.height(8.dp))
         Text(subtitle, fontSize = 12.sp, color = night.sub, textAlign = TextAlign.Center, lineHeight = 19.sp)
         Spacer(Modifier.height(34.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
             repeat(4) { i ->
                 Box(
                     Modifier.size(11.dp).clip(CircleShape)

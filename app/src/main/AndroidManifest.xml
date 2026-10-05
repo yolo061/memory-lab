@@ -17,7 +17,7 @@
         <!-- 小米小部件体系版本号：小部件变动（增删改布局/尺寸）时必须升级 -->
         <meta-data
             android:name="miuiWidgetVersion"
-            android:value="1" />
+            android:value="2" />
 
         <activity
             android:name=".MainActivity"
@@ -31,10 +31,10 @@
             </intent-filter>
         </activity>
 
-        <!-- 桌面快捷「写记录」：按小米规范独立进程 + 曝光刷新声明 -->
+        <!-- 桌面快捷「写记录」：必须 exported=true 否则系统桌面无法绑定（选择器里不显示） -->
         <receiver
             android:name=".widget.QuickAddWidgetProvider"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/widget_quick_add_label"
             android:process=":widgetProvider">
             <intent-filter>

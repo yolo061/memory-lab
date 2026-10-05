@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">拾光记</string>
     <string name="widget_quick_add_label">写记录</string>
+    <string name="widget_quick_add_desc">点一下，立刻记下今天</string>
 </resources>
