@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="sg_paper">#FAF5EE</color>
+    <color name="sg_brand">#C4663F</color>
+    <color name="ic_launcher_bg">#FCF3E8</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

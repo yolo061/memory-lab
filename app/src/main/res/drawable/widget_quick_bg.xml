@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 品牌陶土橙渐变底：与 App 内写记录按钮同色系；系统会统一裁 55px 圆角，自绘圆角保留以兼容旧版 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="315"
+        android:startColor="#E8926A"
+        android:endColor="#C4663F" />
+    <corners android:radius="20dp" />
+</shape>

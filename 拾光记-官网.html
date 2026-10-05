@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="拾光记 · 纯离线的记录 App 官网 —— 时间线、照片、悄悄话与那年今日，所有数据只存在你自己的手机里。">
+<meta name="theme-color" content="#FAF5EE">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>">
+<title>拾光记 · 把每个普通的日子，都收进时光里</title>
+<style>
+/* ============ 设计变量（与 App 原型同源，支持整页换主题） ============ */
+:root{
+  --paper:#FAF5EE; --paper-2:#F3EADD; --card:#FFFFFF;
+  --ink:#33291F; --ink-2:#75675A; --ink-3:#A6988A;
+  --brand:#C4663F; --brand-2:#D97B54; --brand-soft:#F8E7DC; --brand-soft-2:#FBF1E9;
+  --line:rgba(80,58,38,.1);
+  --green:#7A9B6D; --green-soft:#ECF1E4; --green-tx:#5C7A50;
+  --amber:#DE9A52; --amber-soft:#FAEDDA; --amber-tx:#B27327;
+  --blue:#6D9BB5; --blue-soft:#E6EFF4; --blue-tx:#4F7B95;
+  --purple:#9C87B8; --purple-soft:#EFEAF5; --purple-tx:#7A6398;
+  --rose:#C4756B; --rose-soft:#F8E8E5; --rose-tx:#A85248;
+  --grad1:#E8926A; --grad2:#C4663F;
+  --nav-bg:rgba(250,245,238,.82);
+  --shadow:0 10px 30px rgba(96,64,40,.09), 0 2px 6px rgba(96,64,40,.05);
+  --shadow-lg:0 30px 70px rgba(96,64,40,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+html{scroll-padding-top:90px}
+body{
+  font-family:-apple-system,"PingFang SC","HarmonyOS Sans SC","MiSans","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
+  color:var(--ink);background:var(--paper);
+  background-image:
+    radial-gradient(900px 600px at 85% -8%, rgba(217,123,84,.14), transparent 62%),
+    radial-gradient(760px 560px at -8% 30%, rgba(222,154,82,.1), transparent 60%);
+  overflow-x:hidden;
+}
+body.smooth-on{overflow-y:auto}
+::selection{background:var(--brand-soft);color:var(--brand)}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:6px}
+.skip{position:fixed;left:16px;top:-60px;z-index:99;background:var(--ink);color:#FFF6EE;padding:10px 18px;border-radius:12px;font-size:13px;transition:top .25s}
+.skip:focus{top:14px}
+
+/* ---- 平滑滚动容器：桌面端固定 + transform，触屏降级为原生 ---- */
+#smooth{position:relative;z-index:1}
+body.smooth-on #smooth{position:fixed;top:0;left:0;width:100%;will-change:transform}
+
+/* ---- 氛围装饰 ---- */
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);will-change:transform}
+.orb1{width:560px;height:560px;background:radial-gradient(circle,rgba(217,123,84,.3),transparent 66%);top:-160px;right:4%}
+.orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(222,154,82,.24),transparent 66%);top:64%;left:-140px}
+.grain{position:fixed;inset:-40px;pointer-events:none;z-index:40;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ============ 导航 ============ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;height:72px;display:flex;align-items:center;gap:38px;padding:0 max(28px,4vw);transition:background .35s,box-shadow .35s,border-color .35s;border-bottom:1px solid transparent}
+.nav.solid{background:var(--nav-bg);backdrop-filter:blur(16px);border-bottom-color:var(--line);box-shadow:0 10px 34px rgba(96,64,40,.07)}
+.nav-logo{display:flex;align-items:center;gap:11px}
+.nav-logo i{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--brand-2),var(--brand));display:flex;align-items:center;justify-content:center;font-style:normal;font-size:19px;box-shadow:0 6px 16px rgba(196,102,63,.35)}
+.nav-logo b{font-size:17.5px;letter-spacing:1.5px}
+.nav-logo small{font-size:10px;color:var(--ink-3);letter-spacing:2.5px;display:block;margin-top:1px}
+.nav-links{display:flex;gap:30px;margin-left:12px}
+.nav-links a{font-size:14px;color:var(--ink-2);letter-spacing:1px;position:relative;padding:6px 0;transition:color .25s}
+.nav-links a::after{content:"";position:absolute;left:0;right:100%;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--grad1),var(--grad2));transition:right .3s cubic-bezier(.2,.7,.25,1)}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a.on{color:var(--brand);font-weight:600}
+.nav-links a.on::after{right:0}
+.nav-cta{margin-left:auto;display:flex;align-items:center;gap:14px}
+.btn-dark{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:var(--paper);font-size:13.5px;font-weight:600;letter-spacing:1px;padding:10px 22px;border-radius:999px;transition:transform .2s,box-shadow .2s,background .25s}
+.btn-dark:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(51,41,31,.25);background:var(--brand)}
+.btn-dark:active{transform:translateY(0) scale(.97)}
+
+/* ============ Hero ============ */
+.hero{position:relative;min-height:100vh;min-height:100svh;display:grid;grid-template-columns:1.06fr .94fr;align-items:center;gap:44px;max-width:1400px;margin:0 auto;padding:130px max(28px,6vw) 70px}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;letter-spacing:2.5px;color:var(--brand);background:var(--brand-soft);border:1px solid rgba(196,102,63,.22);padding:7px 16px;border-radius:999px;font-weight:600}
+.hero h1{font-size:clamp(42px,5.4vw,76px);font-weight:800;letter-spacing:2px;line-height:1.16;margin:26px 0 22px;text-wrap:balance}
+.hero h1 .hl{background:linear-gradient(115deg,var(--grad1) 10%,var(--grad2) 85%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{font-size:clamp(15px,1.25vw,17.5px);line-height:1.9;color:var(--ink-2);max-width:34em;text-wrap:pretty}
+.hero-ctas{display:flex;align-items:center;gap:16px;margin-top:36px;flex-wrap:wrap}
+.btn-main{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--grad1),var(--grad2));color:#FFF6EE;font-size:15px;font-weight:700;letter-spacing:2px;padding:15px 34px;border-radius:999px;box-shadow:0 14px 30px rgba(196,102,63,.4);transition:transform .22s,box-shadow .22s}
+.btn-main:hover{transform:translateY(-3px);box-shadow:0 20px 40px rgba(196,102,63,.48)}
+.btn-main:active{transform:translateY(-1px) scale(.97)}
+.btn-ghost{display:inline-flex;align-items:center;gap:9px;font-size:14.5px;font-weight:600;color:var(--ink-2);padding:14px 26px;border:1px solid var(--line);border-radius:999px;background:var(--card);transition:all .25s}
+.btn-ghost:hover{color:var(--brand);border-color:rgba(196,102,63,.4);transform:translateY(-2px)}
+.hero-meta{display:flex;gap:22px;margin-top:40px;flex-wrap:wrap}
+.hm{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-3);letter-spacing:1.5px}
+.hm i{font-style:normal;font-size:15px}
+.scroll-cue{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--ink-3);font-size:11px;letter-spacing:3px;will-change:transform,opacity}
+.mouse-ico{width:20px;height:31px;border:1.5px solid var(--ink-3);border-radius:11px;position:relative}
+.mouse-ico::after{content:"";position:absolute;left:50%;top:5px;width:3px;height:7px;border-radius:2px;background:var(--brand);transform:translateX(-50%);animation:wheelDot 1.7s ease-in-out infinite}
+@keyframes wheelDot{0%{opacity:0;transform:translate(-50%,0)}28%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
+
+/* ---- Hero 手机 ---- */
+.hero-stage{display:flex;justify-content:center;perspective:1300px}
+.hero-phone-wrap{will-change:transform}
+.phone-scaler{transform-origin:center center}
+.float{animation:floatY 6.5s ease-in-out infinite}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+/* ============ 手机壳 + 屏幕（与原型同源） ============ */
+.phone{width:390px;height:844px;border-radius:56px;padding:11px;background:linear-gradient(160deg,#2A241F,#171310);box-shadow:0 40px 80px rgba(50,32,18,.35),0 8px 24px rgba(50,32,18,.25),inset 0 1px 1px rgba(255,255,255,.15);position:relative}
+.p-screen{width:100%;height:100%;border-radius:46px;overflow:hidden;position:relative;background:var(--paper);color:var(--ink)}
+.p-island{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:112px;height:30px;border-radius:20px;background:#171310;z-index:60}
+.p-status{position:absolute;top:0;left:0;right:0;height:52px;display:flex;align-items:center;justify-content:space-between;padding:16px 32px 0;z-index:55;font-size:14.5px;font-weight:600;pointer-events:none;transition:color .3s}
+.p-status .si{display:flex;align-items:center;gap:5px}
+.p-gesture{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:120px;height:4.5px;border-radius:3px;background:rgba(60,45,30,.35);z-index:56;transition:background .3s}
+.phone[data-page="p-whisper"] .p-status{color:#EFE9F4}
+.phone[data-page="p-whisper"] .p-gesture{background:rgba(255,255,255,.4)}
+.scr{position:absolute;inset:0;overflow:hidden;opacity:0;transform:translateY(16px) scale(.992);transition:opacity .55s cubic-bezier(.2,.7,.25,1),transform .55s cubic-bezier(.2,.7,.25,1);pointer-events:none}
+.scr.on{opacity:1;transform:none;pointer-events:auto}
+
+/* ---- 屏内组件（与原型同源，静态展示版） ---- */
+.card{background:var(--card);border-radius:24px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:600}
+.c-green{background:var(--green-soft);color:var(--green-tx)}
+.c-amber{background:var(--amber-soft);color:var(--amber-tx)}
+.c-blue{background:var(--blue-soft);color:var(--blue-tx)}
+.iconbtn{width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--line);box-shadow:0 2px 8px rgba(96,64,40,.08)}
+.iconbtn svg{width:19px;height:19px;stroke:var(--ink);stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.photo{border-radius:16px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.14),transparent 40%)}
+.photo span{filter:drop-shadow(0 4px 8px rgba(80,40,10,.25));z-index:1}
+.ph-sunset{background:linear-gradient(165deg,#FFD9A0 0%,#F2A65E 48%,#D96F4E 100%)}
+.ph-food{background:linear-gradient(165deg,#FFE9CC 0%,#F4B880 60%,#E89B5E 100%)}
+.ph-travel{background:linear-gradient(165deg,#D8E9EF 0%,#93BCCD 55%,#6E97AB 100%)}
+.ph-cafe{background:linear-gradient(165deg,#F5E6D6 0%,#DCB58F 60%,#C39A73 100%)}
+.ph-cat{background:linear-gradient(165deg,#F6E7E1 0%,#E5B9A8 60%,#D3A08D 100%)}
+.ph-flower{background:linear-gradient(165deg,#EDF2DD 0%,#C4D6A4 60%,#A5BF83 100%)}
+.home-head{display:flex;align-items:flex-end;justify-content:space-between;padding:66px 22px 0}
+.home-eyebrow{font-size:12.5px;color:var(--ink-3);letter-spacing:1.5px;margin-bottom:3px}
+.home-title{font-size:34px;font-weight:800;letter-spacing:2px;line-height:1}
+.home-title small{font-size:13px;font-weight:600;color:var(--brand);letter-spacing:2px;margin-left:8px;vertical-align:6px;font-style:italic;font-family:Georgia,serif}
+.head-actions{display:flex;gap:9px;padding-bottom:4px}
+.search-pill{margin:16px 22px 0;display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font-size:13px;color:var(--ink-3);box-shadow:0 2px 10px rgba(96,64,40,.05)}
+.search-pill svg{width:16px;height:16px;stroke:var(--ink-3);stroke-width:2;fill:none;stroke-linecap:round}
+.memory-card{margin:16px 22px 0;border-radius:22px;padding:15px 17px;background:linear-gradient(130deg,var(--grad1),var(--grad2) 70%);color:#FFF6EE;box-shadow:0 12px 26px rgba(196,102,63,.35);display:flex;align-items:center;gap:13px;position:relative;overflow:hidden}
+.memory-card::before{content:"🕰️";position:absolute;right:-8px;top:-12px;font-size:74px;opacity:.18;transform:rotate(-12deg)}
+.mc-label{font-size:10.5px;letter-spacing:3px;opacity:.85;font-weight:600}
+.mc-main{font-size:15px;font-weight:700;margin:4px 0 3px;line-height:1.45}
+.mc-sub{font-size:11px;opacity:.8}
+.mc-arrow{margin-left:auto;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex:none}
+.mc-arrow svg{width:15px;height:15px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.day-row{display:flex;align-items:center;gap:10px;padding:24px 24px 11px}
+.day-row b{font-size:14.5px;letter-spacing:.5px}
+.day-row .ln{flex:1;height:1px;background:var(--line)}
+.entry{margin:0 20px 13px;padding:13px 13px 12px}
+.entry-photos{display:flex;gap:7px;margin-bottom:11px}
+.entry-photos .photo{flex:1;aspect-ratio:1.18}
+.entry-photos .photo span{font-size:37px}
+.entry-photos .photo.solo{aspect-ratio:1.9}
+.entry-photos .photo.solo span{font-size:58px}
+.entry-text{font-size:14px;line-height:1.65;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding:0 3px}
+.entry-meta{display:flex;align-items:center;justify-content:space-between;padding:9px 3px 0}
+.entry-time{font-size:11px;color:var(--ink-3)}
+.glassbar{position:absolute;left:18px;right:18px;bottom:26px;height:68px;border-radius:34px;z-index:50;display:flex;align-items:center;justify-content:space-around;padding:0 6px;background:rgba(255,255,255,.6);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border:1px solid rgba(255,255,255,.55);box-shadow:0 18px 44px rgba(42,26,16,.2),0 4px 12px rgba(42,26,16,.08)}
+.glassbar.dark{background:rgba(27,24,35,.62);border-color:rgba(255,255,255,.14);box-shadow:0 18px 44px rgba(0,0,0,.4)}
+.glassbar.dark .bb-item svg{stroke:#9A90AC}
+.glassbar.dark .bb-item span{color:#9A90AC}
+.glassbar.dark .bb-item.on svg{stroke:#E2B272}
+.glassbar.dark .bb-item.on span{color:#E2B272}
+.glassbar.dark .bb-item.on .bb-ico{background:rgba(217,160,91,.18)}
+.bb-item{display:flex;flex-direction:column;align-items:center;gap:3px;width:68px;padding:4px 0}
+.bb-item svg{width:22px;height:22px;stroke:var(--ink-3);stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.bb-item span{font-size:10.5px;color:var(--ink-3);font-weight:500}
+.bb-item.on svg{stroke:var(--brand)}
+.bb-item.on span{color:var(--brand);font-weight:700}
+.bb-item.on .bb-ico{background:var(--brand-soft)}
+.bb-ico{width:44px;height:27px;border-radius:999px;display:flex;align-items:center;justify-content:center}
+.fab{position:absolute;left:50%;transform:translateX(-50%);bottom:59px;width:56px;height:56px;border-radius:19px;background:linear-gradient(140deg,var(--grad1),var(--grad2));display:flex;align-items:center;justify-content:center;box-shadow:0 14px 28px rgba(196,102,63,.5),0 3px 8px rgba(196,102,63,.3);z-index:51}
+.fab svg{width:26px;height:26px;stroke:#fff;stroke-width:2.2;stroke-linecap:round;fill:none}
+.dt-hero{position:relative;height:40.3%}
+.dt-hero .photo{width:100%;height:100%;border-radius:0}
+.dt-hero .photo span{font-size:96px}
+.dt-cap-overlay{position:absolute;left:14px;right:14px;bottom:14px;background:rgba(28,18,10,.5);backdrop-filter:blur(8px);border-radius:16px;padding:11px 15px;color:#FFF6EE;font-size:13px;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+.dt-cap-overlay::before{content:"“";font-family:Georgia,serif;font-size:26px;line-height:1;opacity:.7}
+.dt-back{position:absolute;top:60px;left:16px;z-index:5}
+.dt-dots{position:absolute;bottom:76px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+.dt-dots i{width:6.5px;height:6.5px;border-radius:50%;background:rgba(255,255,255,.45)}
+.dt-dots i.on{background:#fff;width:17px;border-radius:4px}
+.dt-body{padding:20px 24px;display:flex;flex-direction:column;height:53%}
+.dt-date-row{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.dt-date-row b{font-size:14px}
+.dt-date-row .dot{width:3px;height:3px;border-radius:50%;background:var(--ink-3)}
+.dt-date-row span{font-size:12px;color:var(--ink-3)}
+.dt-content{font-size:15px;line-height:1.9;color:var(--ink)}
+.dt-actions{display:flex;gap:10px;margin-top:auto;padding-bottom:26px}
+.dt-act{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:13px;font-weight:600;color:var(--ink-2)}
+.dt-act svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.dt-act.danger{color:var(--rose-tx)}
+.cat-head{padding:66px 24px 4px}
+.cat-head h1{font-size:32px;font-weight:800;letter-spacing:2px}
+.cat-head p{font-size:12.5px;color:var(--ink-3);margin-top:5px;letter-spacing:1px}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px 22px}
+.cat-card{border-radius:24px;padding:18px 17px 16px;position:relative;overflow:hidden;aspect-ratio:1.25;display:flex;flex-direction:column}
+.cat-card .emoji{font-size:32px;display:block;margin-bottom:auto}
+.cat-card b{font-size:16.5px;display:block;letter-spacing:.5px}
+.cat-card small{font-size:11.5px;opacity:.75;display:block;margin-top:3px}
+.cat-card.v-green{background:var(--green-soft);color:var(--green-tx)}
+.cat-card.v-amber{background:var(--amber-soft);color:var(--amber-tx)}
+.cat-card.v-blue{background:var(--blue-soft);color:var(--blue-tx)}
+.cat-card.v-purple{background:var(--purple-soft);color:var(--purple-tx)}
+.cat-card.v-rose{background:var(--rose-soft);color:var(--rose-tx)}
+.cat-add{border-radius:24px;border:1.8px dashed rgba(196,102,63,.4);background:var(--brand-soft-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--brand);font-size:13px;font-weight:600;min-height:118px}
+.cat-add svg{width:24px;height:24px;stroke:var(--brand);stroke-width:1.8;stroke-linecap:round;fill:none}
+.cat-hint{margin:6px 24px;font-size:11.5px;color:var(--ink-3);line-height:1.7;text-align:center}
+.wh-head{padding:66px 24px 4px;display:flex;align-items:flex-end;justify-content:space-between}
+.wh-head h1{font-size:30px;font-weight:800;letter-spacing:2px}
+.wh-head .wh-count{font-size:12px;color:#6E6580}
+.wh-sub{padding:6px 24px 0;font-size:12px;color:#8A80A0;letter-spacing:1px}
+.wh-list{padding:20px 20px 10px;display:flex;flex-direction:column;gap:12px}
+.wh-card{background:#262130;border:1px solid rgba(255,255,255,.05);border-radius:20px;padding:14px 17px;display:flex;gap:12px}
+.wh-bar{width:3px;height:34px;border-radius:3px;background:#D9B36A;flex:none;margin-top:3px}
+.wh-time{font-size:10.5px;color:#6E6580;letter-spacing:1.5px;margin-bottom:7px}
+.wh-text{font-size:13.5px;line-height:1.75;color:#DDD6E8}
+.wh-note{font-size:10.5px;color:#5C5470;text-align:center;padding:16px 0 14px;letter-spacing:1px}
+.scr.p-whisper{background:#1B1823;color:#EFE9F4}
+.my-top{display:flex;align-items:center;gap:10px;padding:62px 18px 4px}
+.my-top h1{font-size:19px;font-weight:800;letter-spacing:1px}
+.my-hero{padding:14px 24px 6px;text-align:center}
+.my-hero .big{font-size:44px;font-weight:800;letter-spacing:3px}
+.my-hero .big em{font-style:normal;color:var(--brand)}
+.my-hero .lunar{font-size:12.5px;color:var(--ink-3);margin-top:6px;letter-spacing:2px}
+.year-block{padding:20px 24px 0}
+.year-label{display:flex;align-items:baseline;gap:9px;margin-bottom:11px}
+.year-label b{font-size:21px;font-weight:800;font-style:italic;font-family:Georgia,serif;letter-spacing:1px}
+.year-label span{font-size:11.5px;color:var(--brand);background:var(--brand-soft);padding:3px 10px;border-radius:999px;font-weight:600}
+.memory-entry{display:flex;gap:13px;padding:13px;align-items:center;margin-bottom:12px}
+.memory-entry .photo{width:76px;height:76px;flex:none}
+.memory-entry .photo span{font-size:34px}
+.me-body b{font-size:15px;display:block;margin-bottom:5px}
+.me-body p{font-size:12.5px;color:var(--ink-2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.me-body .chip{margin-top:0}
+.me-meta{display:flex;align-items:center;margin-top:8px}
+.me-date{margin-left:auto;font-size:11px;color:var(--ink-3)}
+.my-end{text-align:center;padding:26px 0 10px;font-size:11.5px;color:var(--ink-3);letter-spacing:2px}
+.theme-sub{padding:10px 24px 0;font-size:12px;color:var(--ink-3);line-height:1.7}
+.theme-sub b{color:var(--brand)}
+.t-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:16px 22px}
+.t-mini{background:var(--card);border-radius:20px;padding:10px 10px 12px;box-shadow:var(--shadow);border:2px solid transparent}
+.t-mini.sel{border-color:var(--brand)}
+.tm-prev{display:flex;align-items:center;gap:6px;height:64px;border-radius:13px;padding:0 12px;margin-bottom:9px}
+.tm-prev i{width:13px;height:13px;border-radius:50%}
+.tm-prev b{margin-left:auto;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.tm-name{font-size:14px;font-weight:700;display:block;padding:0 3px}
+.tm-desc{font-size:10.5px;color:var(--ink-3);display:block;padding:2px 3px 0}
+
+/* ============ 区块通用 ============ */
+.sec{max-width:1280px;margin:0 auto;padding:120px max(28px,6vw) 0}
+.sec-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:3px;color:var(--brand);font-weight:600}
+.sec-tag::before{content:"";width:26px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--grad1),var(--grad2))}
+.sec h2{font-size:clamp(30px,3.6vw,52px);font-weight:800;letter-spacing:1.5px;line-height:1.25;margin:16px 0 14px;text-wrap:balance}
+.sec-sub{font-size:15.5px;line-height:1.9;color:var(--ink-2);max-width:36em;text-wrap:pretty}
+
+/* ---- 滚动渐入 ---- */
+[data-rv]{opacity:0;transform:translateY(30px);transition:opacity .9s cubic-bezier(.2,.7,.25,1),transform .9s cubic-bezier(.2,.7,.25,1);transition-delay:var(--d,0s)}
+[data-rv].in{opacity:1;transform:none}
+body.no-motion [data-rv]{opacity:1;transform:none;transition:none}
+
+/* ============ 跑马灯 ============ */
+.marquee{margin-top:110px;border-block:1px solid var(--line);background:var(--card);padding:20px 0;overflow:hidden}
+.mq-track{display:flex;gap:52px;width:max-content;animation:mq 30s linear infinite}
+.marquee:hover .mq-track{animation-play-state:paused}
+@keyframes mq{to{transform:translateX(-50%)}}
+.mq-item{display:flex;align-items:center;gap:11px;font-size:15px;color:var(--ink-2);letter-spacing:2px;white-space:nowrap}
+.mq-item i{font-style:normal;font-size:19px}
+.mq-dot{width:4px;height:4px;border-radius:50%;background:var(--line);align-self:center}
+
+/* ============ 功能 Bento ============ */
+.f-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;margin-top:52px}
+.f-card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:30px 28px;box-shadow:var(--shadow);transition:transform .35s cubic-bezier(.2,.7,.25,1),box-shadow .35s;grid-column:span 4}
+.f-card:hover{transform:translateY(-7px);box-shadow:0 26px 54px rgba(96,64,40,.13)}
+.f-card::before{content:"";position:absolute;inset:0;background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),rgba(217,123,84,.1),transparent 45%);opacity:0;transition:opacity .4s;pointer-events:none}
+.f-card:hover::before{opacity:1}
+.f-ico{width:52px;height:52px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:25px;margin-bottom:18px;background:var(--brand-soft)}
+.f-card h3{font-size:19px;font-weight:700;letter-spacing:1px;margin-bottom:10px}
+.f-card p{font-size:13.5px;line-height:1.85;color:var(--ink-2);text-wrap:pretty}
+.f-card .f-more{display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-size:12.5px;font-weight:600;color:var(--brand);letter-spacing:1px}
+.f-card .f-more::after{content:"→";transition:transform .3s}
+.f-card:hover .f-more::after{transform:translateX(4px)}
+.fc-a{grid-column:span 7}
+.fc-b{grid-column:span 5;background:linear-gradient(150deg,#262130,#1B1823);border-color:rgba(255,255,255,.06)}
+.fc-b h3{color:#EFE9F4}
+.fc-b p{color:#A89EBB}
+.fc-b .f-ico{background:rgba(217,179,106,.14)}
+.fc-b .f-more{color:#D9B36A}
+.fc-b .wh-mini{margin-top:20px;display:flex;flex-direction:column;gap:9px}
+.fc-b .wh-mini i{display:block;height:9px;border-radius:5px;background:rgba(255,255,255,.07)}
+.fc-b .wh-mini i:nth-child(1){width:38%;background:rgba(217,179,106,.3)}
+.fc-b .wh-mini i:nth-child(2){width:86%}
+.fc-b .wh-mini i:nth-child(3){width:64%}
+.fc-a .tl-mini{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+.fc-a .tl-row{display:flex;align-items:center;gap:12px}
+.fc-a .tl-row .ph{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.fc-a .tl-row .bar{height:9px;border-radius:5px;background:var(--paper-2)}
+.fc-a .tl-row:nth-child(1) .bar{width:52%}
+.fc-a .tl-row:nth-child(2) .bar{width:70%}
+.fc-a .tl-row:nth-child(3) .bar{width:44%}
+
+/* ============ 应用预览（滚动联动） ============ */
+.showcase-wrap{max-width:1360px;margin:0 auto;padding:0 max(28px,5vw)}
+.showcase-head{text-align:center;max-width:640px;margin:0 auto}
+.showcase-head .sec-tag{justify-content:center}
+.showcase-head .sec-tag::before{display:none}
+.showcase{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px}
+.sc-sticky{height:100vh;height:100svh;display:flex;align-items:center;justify-content:center;gap:34px}
+.sc-progress{width:3px;height:200px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
+.sc-progress i{display:block;width:100%;height:0;background:linear-gradient(180deg,var(--grad1),var(--grad2))}
+.sc-count{font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:14px;color:var(--ink-3);letter-spacing:2px;writing-mode:vertical-rl}
+.sc-count b{color:var(--brand);font-size:20px}
+.sc-steps{display:flex;flex-direction:column}
+.sc-block{min-height:92vh;display:flex;flex-direction:column;justify-content:center;opacity:.2;transform:translateY(22px);transition:opacity .55s cubic-bezier(.2,.7,.25,1),transform .55s cubic-bezier(.2,.7,.25,1)}
+.sc-block.on{opacity:1;transform:none}
+.sc-num{font-family:Georgia,serif;font-style:italic;font-weight:700;font-size:15px;letter-spacing:3px;color:var(--brand)}
+.sc-block h3{font-size:clamp(26px,2.5vw,36px);font-weight:800;letter-spacing:1.5px;margin:14px 0 14px}
+.sc-block p{font-size:15px;line-height:1.95;color:var(--ink-2);max-width:26em;text-wrap:pretty}
+.sc-list{margin-top:22px;display:flex;flex-direction:column;gap:11px}
+.sc-list li{list-style:none;display:flex;align-items:center;gap:11px;font-size:13.5px;color:var(--ink-2);letter-spacing:.5px}
+.sc-list li::before{content:"";width:18px;height:18px;flex:none;border-radius:50%;background:var(--brand-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C4663F' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center/11px no-repeat}
+
+/* ============ 数据 ============ */
+.stats{max-width:1280px;margin:130px auto 0;padding:0 max(28px,6vw)}
+.stats-card{position:relative;overflow:hidden;border-radius:36px;padding:70px 7vw;background:linear-gradient(135deg,var(--grad1) 0%,var(--grad2) 78%);color:#FFF6EE;display:grid;grid-template-columns:repeat(4,1fr);gap:34px;box-shadow:0 34px 80px rgba(196,102,63,.38)}
+.stats-card::before{content:"🕰️";position:absolute;right:-30px;top:-42px;font-size:190px;opacity:.1;transform:rotate(-14deg)}
+.stat b{font-size:clamp(36px,3.8vw,58px);font-weight:800;letter-spacing:1px;display:block;font-variant-numeric:tabular-nums}
+.stat span{display:block;margin-top:9px;font-size:13px;letter-spacing:2.5px;opacity:.82}
+.stat em{font-style:normal;font-size:.55em;font-weight:700;margin-left:3px}
+
+/* ============ 主题 ============ */
+.themes-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:52px}
+.t-card{position:relative;background:var(--card);border-radius:22px;padding:12px 12px 15px;box-shadow:var(--shadow);border:2px solid transparent;text-align:left;transition:transform .3s cubic-bezier(.2,.7,.25,1),box-shadow .3s,border-color .3s}
+.t-card:hover{transform:translateY(-6px);box-shadow:0 22px 46px rgba(96,64,40,.14)}
+.t-card.on{border-color:var(--brand)}
+.tc-prev{display:flex;align-items:center;gap:7px;height:74px;border-radius:15px;padding:0 14px;margin-bottom:12px}
+.tc-prev i{width:14px;height:14px;border-radius:50%}
+.tc-prev b{margin-left:auto;width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.14)}
+.tc-name{font-size:15px;font-weight:700;display:block;padding:0 4px;letter-spacing:.5px}
+.tc-desc{font-size:11px;color:var(--ink-3);display:block;padding:3px 4px 0;letter-spacing:.5px}
+.tc-badge{position:absolute;top:20px;right:20px;background:var(--brand);color:#FFF6EE;font-size:10px;padding:3px 9px;border-radius:999px;font-weight:600;letter-spacing:1px;opacity:0;transform:scale(.8);transition:all .3s}
+.t-card.on .tc-badge{opacity:1;transform:none}
+.json-strip{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 26px;box-shadow:var(--shadow)}
+.json-code{background:#2B241C;color:#F3E5C8;font-family:Consolas,"Courier New",monospace;font-size:12px;line-height:1.8;border-radius:14px;padding:16px 20px;white-space:pre;overflow:auto}
+.json-note{font-size:13px;line-height:2;color:var(--ink-2);text-wrap:pretty}
+.json-note b{color:var(--brand)}
+
+/* ============ 悄悄话引言 ============ */
+.quotes{max-width:1280px;margin:130px auto 0;padding:0 max(28px,6vw)}
+.q-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:52px}
+.q-card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:var(--shadow);position:relative;transition:transform .3s,box-shadow .3s}
+.q-card:hover{transform:translateY(-6px);box-shadow:0 22px 46px rgba(96,64,40,.12)}
+.q-card::before{content:"“";position:absolute;top:10px;right:22px;font-family:Georgia,serif;font-size:64px;line-height:1;color:var(--brand-soft)}
+.q-time{font-size:11px;color:var(--ink-3);letter-spacing:2px}
+.q-text{margin-top:12px;font-size:14.5px;line-height:1.95;color:var(--ink);text-wrap:pretty}
+
+/* ============ CTA ============ */
+.cta{max-width:1280px;margin:140px auto 0;padding:0 max(28px,6vw)}
+.cta-inner{position:relative;overflow:hidden;text-align:center;border-radius:40px;background:var(--paper-2);border:1px solid var(--line);padding:100px 24px 96px}
+.cta-inner::before,.cta-inner::after{content:"☀️";position:absolute;font-size:120px;opacity:.1}
+.cta-inner::before{left:-24px;bottom:-30px;transform:rotate(-16deg)}
+.cta-inner::after{right:-16px;top:-26px;transform:rotate(14deg)}
+.cta-inner h2{font-size:clamp(30px,4vw,56px);font-weight:800;letter-spacing:2px;text-wrap:balance}
+.cta-inner p{margin-top:16px;font-size:15.5px;color:var(--ink-2);letter-spacing:1px}
+.cta-btns{display:flex;justify-content:center;gap:16px;margin-top:38px;flex-wrap:wrap}
+.cta-note{margin-top:26px;font-size:12px;color:var(--ink-3);letter-spacing:2px}
+
+/* ============ 页脚 ============ */
+.footer{margin-top:130px;border-top:1px solid var(--line);background:var(--card)}
+.f-inner{max-width:1280px;margin:0 auto;padding:64px max(28px,6vw) 50px;display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:34px}
+.f-brand p{margin-top:16px;font-size:13px;line-height:2;color:var(--ink-2);max-width:24em}
+.f-col b{display:block;font-size:13px;letter-spacing:2px;margin-bottom:18px}
+.f-col a{display:block;font-size:13px;color:var(--ink-2);padding:6px 0;letter-spacing:.5px;transition:color .2s,transform .2s}
+.f-col a:hover{color:var(--brand);transform:translateX(3px)}
+.f-bottom{border-top:1px solid var(--line);padding:22px max(28px,6vw);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-3);letter-spacing:1px}
+
+/* ---- Toast ---- */
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(16px);background:rgba(45,32,22,.92);color:#FFF6EE;font-size:13px;padding:11px 20px;border-radius:999px;z-index:80;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none;backdrop-filter:blur(4px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---- 主题切换过渡 ---- */
+html.theming, html.theming *{transition:background-color .55s ease,color .55s ease,border-color .55s ease,box-shadow .55s ease !important}
+
+/* ---- 无障碍：减少动态 ---- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important;transition-duration:.01ms!important}
+}
+
+/* ---- 响应式 ---- */
+@media (max-width:1120px){
+  .f-card{grid-column:span 6}
+  .fc-a,.fc-b{grid-column:span 12}
+  .themes-grid{grid-template-columns:repeat(3,1fr)}
+  .stats-card{grid-template-columns:repeat(2,1fr);padding:56px 7vw}
+  .f-inner{grid-template-columns:1fr 1fr}
+}
+@media (max-width:960px){
+  .nav-links{display:none}
+  .hero{grid-template-columns:1fr;padding-top:110px;gap:60px;text-align:center}
+  .hero-sub{margin:0 auto}
+  .hero-ctas,.hero-meta{justify-content:center}
+  .showcase{grid-template-columns:1fr}
+  .sc-sticky{position:sticky;top:64px;height:auto;padding:14px 0 6px;z-index:5}
+  .sc-progress{display:none}
+  .phone{width:300px;height:650px;border-radius:44px;padding:9px}
+  .p-screen{border-radius:36px}
+  .sc-block{min-height:auto;padding:36px 0;opacity:1;transform:none}
+  .q-grid{grid-template-columns:1fr}
+  .json-strip{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  .themes-grid{grid-template-columns:1fr 1fr}
+  .stats-card{grid-template-columns:1fr 1fr;gap:26px}
+  .f-card{grid-column:span 12}
+  .f-inner{grid-template-columns:1fr}
+  .hero h1{letter-spacing:1px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#features">跳到主要内容</a>
+<div class="orb orb1" aria-hidden="true"></div>
+<div class="orb orb2" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ 导航 ============ -->
+<header class="nav" id="nav">
+  <a class="nav-logo" href="#top" data-to="top">
+    <i>☀️</i>
+    <span><b>拾光记</b><small>SHIGUANG JI</small></span>
+  </a>
+  <nav class="nav-links" aria-label="主导航">
+    <a href="#features" data-to="features" data-spy="features">产品能力</a>
+    <a href="#showcase" data-to="showcase" data-spy="showcase">应用预览</a>
+    <a href="#stats" data-to="stats" data-spy="stats">你的坚持</a>
+    <a href="#themes" data-to="themes" data-spy="themes">主题商店</a>
+    <a href="#download" data-to="download" data-spy="download">下载</a>
+  </nav>
+  <div class="nav-cta">
+    <button class="btn-dark" onclick="toast('v1.0 尚在打磨中 · 敬请期待')">立即下载</button>
+  </div>
+</header>
+
+<div id="smooth">
+<main id="top">
+
+  <!-- ============ Hero ============ -->
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="hero-eyebrow">完全离线 · 0 网络权限 · v1.0</span>
+      <h1>把每个普通的日子，<br>都收进<span class="hl">时光里</span>。</h1>
+      <p class="hero-sub">拾光记是一款安静的记录 App。时间线、照片、悄悄话、那年今日——一天一条，自然排开，所有数据只存在你自己的手机里。</p>
+      <div class="hero-ctas">
+        <a class="btn-main" href="#showcase" data-to="showcase">看看它长什么样</a>
+        <a class="btn-ghost" href="#features" data-to="features">了解产品能力</a>
+      </div>
+      <div class="hero-meta">
+        <span class="hm"><i>🔒</i>PIN + 生物识别</span>
+        <span class="hm"><i>🎨</i>5 套主题 · 一键换装</span>
+        <span class="hm"><i>📮</i>免费 · 无任何订阅</span>
+      </div>
+    </div>
+    <div class="hero-stage">
+      <div class="hero-phone-wrap" id="heroPhone">
+        <div class="phone-scaler float">
+          <div class="phone" data-page="p-home">
+            <div class="p-screen">
+              <div class="p-island"></div>
+              <div class="p-status"><span>9:41</span><span class="si"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor"><rect x="1" y="1" width="19" height="10" rx="3" stroke-width="1.2" opacity=".5"/><rect x="3" y="3" width="13" height="6" rx="1.5" fill="currentColor" stroke="none"/><path d="M22 4v4" stroke-width="1.6" stroke-linecap="round" opacity=".5"/></svg></span></div>
+
+              <header class="home-head">
+                <div>
+                  <div class="home-eyebrow">10月4日 · 星期六 · 晚上好</div>
+                  <h2 class="home-title">拾光<small>SHIGUANG</small></h2>
+                </div>
+                <div class="head-actions">
+                  <span class="iconbtn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16.2 16.2 4.3 4.3"/></svg></span>
+                  <span class="iconbtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.8v4.2l2.8 2.8"/></svg></span>
+                </div>
+              </header>
+              <div class="search-pill"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16.2 16.2 4.3 4.3"/></svg>搜索记录、照片说明…</div>
+              <div class="memory-card">
+                <div>
+                  <div class="mc-label">那 年 · 今 日</div>
+                  <div class="mc-main">3 年前的今天，你第一次一起看了海</div>
+                  <div class="mc-sub">2023.10.04 · 那年今日</div>
+                </div>
+                <span class="mc-arrow"><svg viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></svg></span>
+              </div>
+              <div class="day-row"><b>今天 · 10月4日 星期六</b><span class="ln"></span></div>
+              <article class="entry card">
+                <div class="entry-photos">
+                  <div class="photo ph-food"><span>🍜</span></div>
+                  <div class="photo ph-cafe"><span>☕</span></div>
+                </div>
+                <p class="entry-text">和妈妈去吃了巷口新开的面馆，汤头很浓，她一边吹一边说"比外婆做的还差点意思"，然后自己偷偷加了两次醋。</p>
+                <div class="entry-meta"><span class="chip c-amber">🍜 美食</span><span class="entry-time">12:36</span></div>
+              </article>
+              <div class="day-row"><b>10月3日 · 星期五</b><span class="ln"></span></div>
+              <article class="entry card">
+                <div class="entry-photos">
+                  <div class="photo ph-travel solo"><span>🏔️</span></div>
+                </div>
+                <p class="entry-text">开车一个多小时去了郊外，山里的枫叶刚开始红。风很轻，阳光落在肩膀上，忽然觉得忙碌的日子也值得被记下来。</p>
+                <div class="entry-meta"><span class="chip c-blue">🧳 旅行</span><span class="entry-time">18:02</span></div>
+              </article>
+
+              <nav class="glassbar">
+                <span class="bb-item on"><span class="bb-ico"><svg viewBox="0 0 24 24"><path d="M4.5 10.2 12 4.4l7.5 5.8v8a1.8 1.8 0 0 1-1.8 1.8h-3.4v-4.6a2.3 2.3 0 0 0-4.6 0V20H6.3a1.8 1.8 0 0 1-1.8-1.8Z"/></svg></span><span>拾光</span></span>
+                <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2.4"/><rect x="13" y="4" width="7" height="7" rx="2.4"/><rect x="4" y="13" width="7" height="7" rx="2.4"/><rect x="13" y="13" width="7" height="7" rx="2.4"/></svg></span><span>栏目</span></span>
+                <span style="width:52px"></span>
+                <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><path d="M19.5 13.8A7.8 7.8 0 0 1 10.2 4.5a7.8 7.8 0 1 0 9.3 9.3Z"/></svg></span><span>悄悄话</span></span>
+                <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.7"/><path d="M5.4 19.6c1.2-3.3 3.7-5 6.6-5s5.4 1.7 6.6 5"/></svg></span><span>我的</span></span>
+              </nav>
+              <span class="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+              <div class="p-gesture"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-cue" id="scrollCue"><span class="mouse-ico"></span>向下滚动</div>
+  </section>
+
+  <!-- ============ 栏目跑马灯 ============ -->
+  <div class="marquee" aria-hidden="true">
+    <div class="mq-track" id="mqTrack">
+      <span class="mq-item"><i>🌿</i>生活</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>🍜</i>美食</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>🧳</i>旅行</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>☁️</i>心情</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>📚</i>工作</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>🐱</i>宠物</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>🌸</i>阳台</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>☕</i>咖啡</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>🎸</i>周末</span><span class="mq-dot"></span>
+      <span class="mq-item"><i>📷</i>胶片</span><span class="mq-dot"></span>
+    </div>
+  </div>
+
+  <!-- ============ 产品能力 ============ -->
+  <section class="sec" id="features">
+    <span class="sec-tag" data-rv>产品能力</span>
+    <h2 data-rv style="--d:.06s">小而完整，<br>专注记录本身。</h2>
+    <p class="sec-sub" data-rv style="--d:.12s">没有信息流，没有社交压力，也没有广告。拾光记把力气都花在「让记录这件事变轻松」上。</p>
+    <div class="f-grid">
+      <article class="f-card fc-a" data-rv>
+        <span class="f-ico">⏱</span>
+        <h3>时间线</h3>
+        <p>一天一条，按时间自然排开。打开 App 就是今天，往上滑是昨天——像翻一本越写越厚的日记。</p>
+        <div class="tl-mini" aria-hidden="true">
+          <div class="tl-row"><span class="ph ph-food">🍜</span><span class="bar"></span></div>
+          <div class="tl-row"><span class="ph ph-travel">🏔️</span><span class="bar"></span></div>
+          <div class="tl-row"><span class="ph ph-flower">🌿</span><span class="bar"></span></div>
+        </div>
+      </article>
+      <article class="f-card fc-b" data-rv style="--d:.08s">
+        <span class="f-ico">🌙</span>
+        <h3>悄悄话</h3>
+        <p>PIN 与生物识别加密，只说给自己听。这一页从不离开你的手机，不上传任何服务器。</p>
+        <div class="wh-mini" aria-hidden="true"><i></i><i></i><i></i></div>
+        <span class="f-more">了解加密方式</span>
+      </article>
+      <article class="f-card" data-rv>
+        <span class="f-ico">📷</span>
+        <h3>照片说明</h3>
+        <p>每张照片都能写一句话。多年以后翻到，一眼就想起当时为什么按下快门。</p>
+        <span class="f-more">查看示例</span>
+      </article>
+      <article class="f-card" data-rv style="--d:.08s">
+        <span class="f-ico">⏮</span>
+        <h3>那年今日</h3>
+        <p>往年的今天会自动回来找你：3 年前的海、5 年前的桂花糕，都在同一个日期等你。</p>
+        <span class="f-more">看看那年今天</span>
+      </article>
+      <article class="f-card" data-rv style="--d:.16s">
+        <span class="f-ico">💾</span>
+        <h3>备份恢复</h3>
+        <p>数据库与照片打包成一个 zip，备份、恢复都在本机完成，换手机也不丢。</p>
+        <span class="f-more">了解备份</span>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 应用预览（滚动联动换屏） ============ -->
+  <section id="showcase">
+    <div class="showcase-wrap">
+      <div class="showcase-head">
+        <span class="sec-tag" data-rv>应用预览</span>
+        <h2 data-rv style="--d:.06s">六个页面，<br>一眼看懂拾光记。</h2>
+        <p class="sec-sub" data-rv style="--d:.12s">继续往下滚动，手机里的画面会跟着你的手势一页页切换。</p>
+      </div>
+      <div class="showcase" id="showcaseSec">
+        <div class="sc-sticky" id="scSticky">
+          <span class="sc-count"><b id="scIdx">01</b> / 06</span>
+          <span class="sc-progress"><i id="scFill"></i></span>
+          <div class="phone-scaler" style="transform:scale(.78)">
+            <div class="phone" id="scPhone" data-page="p-home">
+              <div class="p-screen">
+                <div class="p-island"></div>
+                <div class="p-status"><span>9:41</span><span class="si"><svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor"><rect x="1" y="1" width="19" height="10" rx="3" stroke-width="1.2" opacity=".5"/><rect x="3" y="3" width="13" height="6" rx="1.5" fill="currentColor" stroke="none"/><path d="M22 4v4" stroke-width="1.6" stroke-linecap="round" opacity=".5"/></svg></span></div>
+
+                <!-- 01 首页 -->
+                <div class="scr on" data-scr="p-home">
+                  <header class="home-head">
+                    <div>
+                      <div class="home-eyebrow">10月4日 · 星期六 · 晚上好</div>
+                      <h2 class="home-title">拾光<small>SHIGUANG</small></h2>
+                    </div>
+                    <div class="head-actions">
+                      <span class="iconbtn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16.2 16.2 4.3 4.3"/></svg></span>
+                      <span class="iconbtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.8v4.2l2.8 2.8"/></svg></span>
+                    </div>
+                  </header>
+                  <div class="search-pill"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16.2 16.2 4.3 4.3"/></svg>搜索记录、照片说明…</div>
+                  <div class="memory-card">
+                    <div>
+                      <div class="mc-label">那 年 · 今 日</div>
+                      <div class="mc-main">3 年前的今天，你第一次一起看了海</div>
+                      <div class="mc-sub">2023.10.04 · 那年今日</div>
+                    </div>
+                    <span class="mc-arrow"><svg viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></svg></span>
+                  </div>
+                  <div class="day-row"><b>今天 · 10月4日 星期六</b><span class="ln"></span></div>
+                  <article class="entry card">
+                    <div class="entry-photos">
+                      <div class="photo ph-food"><span>🍜</span></div>
+                      <div class="photo ph-cafe"><span>☕</span></div>
+                    </div>
+                    <p class="entry-text">和妈妈去吃了巷口新开的面馆，汤头很浓，她一边吹一边说"比外婆做的还差点意思"，然后自己偷偷加了两次醋。</p>
+                    <div class="entry-meta"><span class="chip c-amber">🍜 美食</span><span class="entry-time">12:36</span></div>
+                  </article>
+                  <div class="day-row"><b>10月3日 · 星期五</b><span class="ln"></span></div>
+                  <article class="entry card">
+                    <div class="entry-photos">
+                      <div class="photo ph-travel solo"><span>🏔️</span></div>
+                    </div>
+                    <p class="entry-text">开车一个多小时去了郊外，山里的枫叶刚开始红。风很轻，阳光落在肩膀上。</p>
+                    <div class="entry-meta"><span class="chip c-blue">🧳 旅行</span><span class="entry-time">18:02</span></div>
+                  </article>
+                  <nav class="glassbar">
+                    <span class="bb-item on"><span class="bb-ico"><svg viewBox="0 0 24 24"><path d="M4.5 10.2 12 4.4l7.5 5.8v8a1.8 1.8 0 0 1-1.8 1.8h-3.4v-4.6a2.3 2.3 0 0 0-4.6 0V20H6.3a1.8 1.8 0 0 1-1.8-1.8Z"/></svg></span><span>拾光</span></span>
+                    <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2.4"/><rect x="13" y="4" width="7" height="7" rx="2.4"/><rect x="4" y="13" width="7" height="7" rx="2.4"/><rect x="13" y="13" width="7" height="7" rx="2.4"/></svg></span><span>栏目</span></span>
+                    <span style="width:52px"></span>
+                    <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><path d="M19.5 13.8A7.8 7.8 0 0 1 10.2 4.5a7.8 7.8 0 1 0 9.3 9.3Z"/></svg></span><span>悄悄话</span></span>
+                    <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.7"/><path d="M5.4 19.6c1.2-3.3 3.7-5 6.6-5s5.4 1.7 6.6 5"/></svg></span><span>我的</span></span>
+                  </nav>
+                  <span class="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+                </div>
+
+                <!-- 02 记录详情 -->
+                <div class="scr" data-scr="p-detail" style="background:var(--paper)">
+                  <div class="dt-hero">
+                    <div class="photo ph-sunset"><span>🌄</span></div>
+                    <span class="iconbtn dt-back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></span>
+                    <div class="dt-dots"><i class="on"></i><i></i></div>
+                    <div class="dt-cap-overlay">落日把云染成了橘子味，我们坐在车顶看完了整个日落。</div>
+                  </div>
+                  <div class="dt-body">
+                    <div class="dt-date-row"><b>10月3日 · 星期五</b><span class="dot"></span><span>18:02</span><span class="chip c-blue" style="margin-left:auto">🧳 旅行</span></div>
+                    <p class="dt-content">开车一个多小时去了郊外，山里的枫叶刚开始红。风很轻，阳光落在肩膀上，忽然觉得，忙碌的日子也值得被记下来。<br><br>回来的路上买了热栗子，一路剥一路笑。</p>
+                    <div class="dt-actions">
+                      <span class="dt-act"><svg viewBox="0 0 24 24"><path d="M14.5 5.5l4 4L9 19H5v-4l9.5-9.5ZM12.5 7.5l4 4"/></svg>编辑</span>
+                      <span class="dt-act danger"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V5.5A1.5 1.5 0 0 1 11.5 4h1A1.5 1.5 0 0 1 14 5.5V7M7 7l.7 11.2A1.8 1.8 0 0 0 9.5 19.8h5a1.8 1.8 0 0 0 1.8-1.6L17 7M10.2 10.5v5.5M13.8 10.5v5.5"/></svg>删除</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 03 栏目 -->
+                <div class="scr" data-scr="p-cats">
+                  <div class="cat-head"><h1>栏目</h1><p>把日子分门别类地收好 · 长按可整理</p></div>
+                  <div class="cat-grid">
+                    <span class="cat-card v-green"><span class="emoji">🌿</span><b>生活</b><small>42 篇</small></span>
+                    <span class="cat-card v-amber"><span class="emoji">🍜</span><b>美食</b><small>36 篇</small></span>
+                    <span class="cat-card v-blue"><span class="emoji">🧳</span><b>旅行</b><small>18 篇</small></span>
+                    <span class="cat-card v-purple"><span class="emoji">☁️</span><b>心情</b><small>27 篇</small></span>
+                    <span class="cat-card v-rose"><span class="emoji">📚</span><b>工作</b><small>9 篇</small></span>
+                    <span class="cat-add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>新建栏目</span>
+                  </div>
+                  <p class="cat-hint">删除栏目时，里面的记录不会被删掉，只是回到「未分类」。</p>
+                </div>
+
+                <!-- 04 悄悄话 -->
+                <div class="scr p-whisper" data-scr="p-whisper">
+                  <div class="wh-head"><h1>悄悄话 🌙</h1><span class="wh-count">共 3 条</span></div>
+                  <div class="wh-sub">这些话，只说给自己听 · 加密存放在这台手机里</div>
+                  <div class="wh-list">
+                    <div class="wh-card"><span class="wh-bar"></span><div><div class="wh-time">10月2日 · 23:47</div><p class="wh-text">其实今天有点想家了。视频的时候妈妈说院子里的柿子熟了，我说好，过年回去摘。</p></div></div>
+                    <div class="wh-card"><span class="wh-bar"></span><div><div class="wh-time">9月28日 · 00:12</div><p class="wh-text">告诉自己：不要跟别人比进度。花有花期，树有年轮，我按自己的节奏慢慢来，也可以的。</p></div></div>
+                    <div class="wh-card"><span class="wh-bar"></span><div><div class="wh-time">9月21日 · 19:05</div><p class="wh-text">今天在地铁上看到一句话——"把日子过成自己喜欢的样子"，突然就鼻子一酸。</p></div></div>
+                  </div>
+                  <nav class="glassbar dark">
+                    <span class="bb-item on"><span class="bb-ico"><svg viewBox="0 0 24 24"><path d="M4.5 10.2 12 4.4l7.5 5.8v8a1.8 1.8 0 0 1-1.8 1.8h-3.4v-4.6a2.3 2.3 0 0 0-4.6 0V20H6.3a1.8 1.8 0 0 1-1.8-1.8Z"/></svg></span><span>拾光</span></span>
+                    <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2.4"/><rect x="13" y="4" width="7" height="7" rx="2.4"/><rect x="4" y="13" width="7" height="7" rx="2.4"/><rect x="13" y="13" width="7" height="7" rx="2.4"/></svg></span><span>栏目</span></span>
+                    <span style="width:52px"></span>
+                    <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><path d="M19.5 13.8A7.8 7.8 0 0 1 10.2 4.5a7.8 7.8 0 1 0 9.3 9.3Z"/></svg></span><span>悄悄话</span></span>
+                    <span class="bb-item"><span class="bb-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.2" r="3.7"/><path d="M5.4 19.6c1.2-3.3 3.7-5 6.6-5s5.4 1.7 6.6 5"/></svg></span><span>我的</span></span>
+                  </nav>
+                  <span class="fab"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+                  <div style="text-align:center;padding:6px 0 60px"><span style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:999px;background:rgba(217,179,106,.13);border:1px solid rgba(217,179,106,.25);color:#D9B36A;font-size:13.5px;font-weight:600"><span style="font-weight:700">＋</span>写一句悄悄话</span></div>
+                </div>
+
+                <!-- 05 那年今日 -->
+                <div class="scr" data-scr="p-memory">
+                  <div class="my-top"><span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></span><h1>那年今日</h1></div>
+                  <div class="my-hero">
+                    <div class="big">10<em>月</em>4<em>日</em></div>
+                    <div class="lunar">农历的日子每年不同 · 重要的是那天的事</div>
+                  </div>
+                  <div class="year-block">
+                    <div class="year-label"><b>2023</b><span>3 年前</span></div>
+                    <article class="memory-entry card">
+                      <div class="photo ph-sunset"><span>🌊</span></div>
+                      <div class="me-body">
+                        <b>第一次一起看海</b>
+                        <p>海风把头发吹得很乱，但笑得很开心。约好了每年秋天都来看一次海。</p>
+                        <div class="me-meta"><span class="chip c-blue">🧳 旅行</span><span class="me-date">10月4日</span></div>
+                      </div>
+                    </article>
+                  </div>
+                  <div class="year-block">
+                    <div class="year-label"><b>2021</b><span>5 年前</span></div>
+                    <article class="memory-entry card">
+                      <div class="photo ph-food"><span>🍮</span></div>
+                      <div class="me-body">
+                        <b>外婆的桂花糕</b>
+                        <p>院子里的桂花开了，外婆蒸了一屉桂花糕，甜味能从巷子头飘到巷子尾。</p>
+                        <div class="me-meta"><span class="chip c-amber">🍜 美食</span><span class="me-date">10月4日</span></div>
+                      </div>
+                    </article>
+                  </div>
+                  <div class="my-end">— 时间会把日子酿成故事 —</div>
+                </div>
+
+                <!-- 06 主题外观 -->
+                <div class="scr" data-scr="p-theme">
+                  <div class="my-top"><span class="iconbtn"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></span><h1>主题外观</h1></div>
+                  <p class="theme-sub">每一套主题就是一个<b>主题包</b>——一份描述配色的 JSON 文件，点一下立刻换装。</p>
+                  <div class="t-mini-grid">
+                    <span class="t-mini sel"><span class="tm-prev" style="background:linear-gradient(140deg,#FAF5EE,#F3EADD)"><i style="background:#C4663F"></i><i style="background:#7A9B6D"></i><i style="background:#6D9BB5"></i><b style="background:#fff;color:#33291F">Aa</b></span><span class="tm-name">拾光暖阳</span><span class="tm-desc">拾光记官方</span></span>
+                    <span class="t-mini"><span class="tm-prev" style="background:linear-gradient(140deg,#16131D,#1F1B2A)"><i style="background:#D9A05B"></i><i style="background:#8FAE7E"></i><i style="background:#7FA6C4"></i><b style="background:#262033;color:#EFE9F6">Aa</b></span><span class="tm-name">月见夜话</span><span class="tm-desc">拾光记官方 · 深色</span></span>
+                    <span class="t-mini"><span class="tm-prev" style="background:linear-gradient(140deg,#F1F4EA,#E5EBD9)"><i style="background:#5F7D4F"></i><i style="background:#C9A94E"></i><i style="background:#6D9BB5"></i><b style="background:#fff;color:#28301F">Aa</b></span><span class="tm-name">青梅酿</span><span class="tm-desc">拾光记官方</span></span>
+                    <span class="t-mini"><span class="tm-prev" style="background:linear-gradient(140deg,#EEF2F6,#E1E8EF)"><i style="background:#4E7A96"></i><i style="background:#DE9A52"></i><i style="background:#9C87B8"></i><b style="background:#fff;color:#232D38">Aa</b></span><span class="tm-name">雾蓝信笺</span><span class="tm-desc">拾光记官方</span></span>
+                    <span class="t-mini"><span class="tm-prev" style="background:linear-gradient(140deg,#FBF1F1,#F5E3E5)"><i style="background:#C05E6E"></i><i style="background:#DE9A52"></i><i style="background:#6D9BB5"></i><b style="background:#fff;color:#342428">Aa</b></span><span class="tm-name">樱粉气泡</span><span class="tm-desc">拾光记官方</span></span>
+                  </div>
+                </div>
+
+                <div class="p-gesture"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-steps" id="scSteps">
+          <div class="sc-block on" data-scr="p-home">
+            <span class="sc-num">01</span>
+            <h3>首页 · 时间线</h3>
+            <p>打开就是今天。照片、正文与栏目组合成一天一条的记录，往上滑，是之前的每一天。</p>
+            <ul class="sc-list"><li>照片 + 正文 + 栏目，一条记录说清一天</li><li>那 年 今 日 横幅，旧时光自动浮现</li><li>顶栏搜索正文与照片说明</li></ul>
+          </div>
+          <div class="sc-block" data-scr="p-detail">
+            <span class="sc-num">02</span>
+            <h3>记录详情</h3>
+            <p>落日、山风与热栗子。照片可以左右翻页，每一张都有它自己的说明文字。</p>
+            <ul class="sc-list"><li>照片轮播 + 独立说明</li><li>栏目、日期、时间一眼可见</li><li>随时编辑或删除</li></ul>
+          </div>
+          <div class="sc-block" data-scr="p-cats">
+            <span class="sc-num">03</span>
+            <h3>栏目</h3>
+            <p>生活、美食、旅行……把日子分门别类地收好。栏目就是五个颜色柔和的抽屉。</p>
+            <ul class="sc-list"><li>自定义图标与颜色</li><li>删除栏目不影响记录</li><li>篇数与最近更新一目了然</li></ul>
+          </div>
+          <div class="sc-block" data-scr="p-whisper">
+            <span class="sc-num">04</span>
+            <h3>悄悄话</h3>
+            <p>深夜的想法、说不出口的想念，写在这里。PIN 加密，这一页从不离开你的手机。</p>
+            <ul class="sc-list"><li>PIN + 生物识别双保险</li><li>零网络权限，物理级隐私</li><li>深色界面，只属于夜晚</li></ul>
+          </div>
+          <div class="sc-block" data-scr="p-memory">
+            <span class="sc-num">05</span>
+            <h3>那年今日</h3>
+            <p>3 年前的今天你第一次一起看了海。往年的记录会在同一天自动回来找你。</p>
+            <ul class="sc-list"><li>按年份回溯，时间线自然生长</li><li>农历显示，宜翻旧时光</li><li>一键回到那条记录</li></ul>
+          </div>
+          <div class="sc-block" data-scr="p-theme">
+            <span class="sc-num">06</span>
+            <h3>主题外观</h3>
+            <p>五套主题，每套都是一份主题包文件。点一下整个 App 换装，还能导出分享给朋友。</p>
+            <ul class="sc-list"><li>主题即 JSON，导入导出自由</li><li>缺字段自动回退默认值</li><li>下方可直接试用，整页跟着换装</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 数据 ============ -->
+  <section class="stats" id="stats">
+    <div class="stats-card">
+      <div class="stat" data-rv><b><span data-count="132">0</span><em>天</em></b><span>连续记录</span></div>
+      <div class="stat" data-rv style="--d:.08s"><b><span data-count="356">0</span><em>张</em></b><span>照片被好好收着</span></div>
+      <div class="stat" data-rv style="--d:.16s"><b><span data-count="5">0</span><em>个</em></b><span>分类栏目</span></div>
+      <div class="stat" data-rv style="--d:.24s"><b><span data-count="100">0</span><em>%</em></b><span>离线 · 数据不出设备</span></div>
+    </div>
+  </section>
+
+  <!-- ============ 主题商店 ============ -->
+  <section class="sec" id="themes">
+    <span class="sec-tag" data-rv>主题商店</span>
+    <h2 data-rv style="--d:.06s">一份 JSON，<br>整个 App 跟着换装。</h2>
+    <p class="sec-sub" data-rv style="--d:.12s">主题不只是换个颜色——它是可以导入导出的主题包文件。点下面任意一套，这个页面会立刻跟着换装。</p>
+    <div class="themes-grid" id="themesGrid">
+      <button class="t-card on" data-t="t-warm" data-rv>
+        <span class="tc-prev" style="background:linear-gradient(140deg,#FAF5EE,#F3EADD)"><i style="background:#C4663F"></i><i style="background:#7A9B6D"></i><i style="background:#6D9BB5"></i><b style="background:#fff;color:#33291F">Aa</b></span>
+        <span class="tc-name">拾光暖阳</span><span class="tc-desc">拾光记官方</span>
+        <span class="tc-badge">使用中</span>
+      </button>
+      <button class="t-card" data-t="t-night" data-rv style="--d:.06s">
+        <span class="tc-prev" style="background:linear-gradient(140deg,#16131D,#1F1B2A)"><i style="background:#D9A05B"></i><i style="background:#8FAE7E"></i><i style="background:#7FA6C4"></i><b style="background:#262033;color:#EFE9F6">Aa</b></span>
+        <span class="tc-name">月见夜话</span><span class="tc-desc">拾光记官方 · 深色</span>
+        <span class="tc-badge">使用中</span>
+      </button>
+      <button class="t-card" data-t="t-plum" data-rv style="--d:.12s">
+        <span class="tc-prev" style="background:linear-gradient(140deg,#F1F4EA,#E5EBD9)"><i style="background:#5F7D4F"></i><i style="background:#C9A94E"></i><i style="background:#6D9BB5"></i><b style="background:#fff;color:#28301F">Aa</b></span>
+        <span class="tc-name">青梅酿</span><span class="tc-desc">拾光记官方</span>
+        <span class="tc-badge">使用中</span>
+      </button>
+      <button class="t-card" data-t="t-mist" data-rv style="--d:.18s">
+        <span class="tc-prev" style="background:linear-gradient(140deg,#EEF2F6,#E1E8EF)"><i style="background:#4E7A96"></i><i style="background:#DE9A52"></i><i style="background:#9C87B8"></i><b style="background:#fff;color:#232D38">Aa</b></span>
+        <span class="tc-name">雾蓝信笺</span><span class="tc-desc">拾光记官方</span>
+        <span class="tc-badge">使用中</span>
+      </button>
+      <button class="t-card" data-t="t-sakura" data-rv style="--d:.24s">
+        <span class="tc-prev" style="background:linear-gradient(140deg,#FBF1F1,#F5E3E5)"><i style="background:#C05E6E"></i><i style="background:#DE9A52"></i><i style="background:#6D9BB5"></i><b style="background:#fff;color:#342428">Aa</b></span>
+        <span class="tc-name">樱粉气泡</span><span class="tc-desc">拾光记官方</span>
+        <span class="tc-badge">使用中</span>
+      </button>
+    </div>
+    <div class="json-strip" data-rv>
+      <pre class="json-code">{
+  "format": "shiguangji-theme-pack",
+  "version": 1,
+  "name": "拾光暖阳",
+  "author": "拾光记官方",
+  "colors": {
+    "paper": "#FAF5EE",
+    "brand": "#C4663F",
+    "ink": "#33291F"
+  }
+}</pre>
+      <p class="json-note"><b>主题包的移植性</b>：每套主题就是上面这样一份 JSON 文件，存在应用的 themes/ 目录下，启动时自动识别加载；缺少的字段自动回退默认值，不怕文件缺斤少两。导出后可以发给朋友，也可以在自己多台设备间同步——换手机，主题跟着走。</p>
+    </div>
+  </section>
+
+  <!-- ============ 悄悄话引言 ============ -->
+  <section class="quotes" id="quotes">
+    <span class="sec-tag" data-rv>写给自己听</span>
+    <h2 data-rv style="--d:.06s">有些话，只说给自己听。</h2>
+    <p class="sec-sub" data-rv style="--d:.12s">来自悄悄话功能的真实使用场景——加密存放在本机，不上传任何服务器。</p>
+    <div class="q-grid">
+      <article class="q-card" data-rv>
+        <span class="q-time">10月2日 · 23:47</span>
+        <p class="q-text">其实今天有点想家了。视频的时候妈妈说院子里的柿子熟了，我说好，过年回去摘。挂了电话才想起来，我已经两年没回去过秋天了。</p>
+      </article>
+      <article class="q-card" data-rv style="--d:.08s">
+        <span class="q-time">9月28日 · 00:12</span>
+        <p class="q-text">告诉自己：不要跟别人比进度。花有花期，树有年轮，我按自己的节奏慢慢来，也可以的。</p>
+      </article>
+      <article class="q-card" data-rv style="--d:.16s">
+        <span class="q-time">9月21日 · 19:05</span>
+        <p class="q-text">今天在地铁上看到一句话——"把日子过成自己喜欢的样子"，突然就鼻子一酸。加油啊，正在努力生活的人。</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 下载 CTA ============ -->
+  <section class="cta" id="download">
+    <div class="cta-inner" data-rv>
+      <h2>现在，记下第一条。</h2>
+      <p>从今天的晚饭开始，把日子一天天收进时光里。</p>
+      <div class="cta-btns">
+        <button class="btn-main" onclick="toast('v1.0 尚在打磨中 · 敬请期待')">立即下载 · Android</button>
+        <a class="btn-ghost" href="#top" data-to="top">回到顶部</a>
+      </div>
+      <p class="cta-note">完全离线 · 免费使用 · 数据永不出设备</p>
+    </div>
+  </section>
+
+  <!-- ============ 页脚 ============ -->
+  <footer class="footer">
+    <div class="f-inner">
+      <div class="f-brand">
+        <a class="nav-logo" href="#top" data-to="top"><i>☀️</i><span><b>拾光记</b><small>SHIGUANG JI</small></span></a>
+        <p>一款安静的记录 App。把每个普通的日子，都收进时光里。</p>
+      </div>
+      <div class="f-col">
+        <b>产品</b>
+        <a href="#features" data-to="features">产品能力</a>
+        <a href="#showcase" data-to="showcase">应用预览</a>
+        <a href="#themes" data-to="themes">主题商店</a>
+      </div>
+      <div class="f-col">
+        <b>支持</b>
+        <a href="#stats" data-to="stats">数据一览</a>
+        <a href="#download" data-to="download">下载 App</a>
+        <a href="javascript:void(0)" onclick="toast('示例官网：该入口在正式版中开放')">反馈建议</a>
+      </div>
+      <div class="f-col">
+        <b>关于</b>
+        <a href="javascript:void(0)" onclick="toast('示例官网：该入口在正式版中开放')">更新日志</a>
+        <a href="javascript:void(0)" onclick="toast('示例官网：该入口在正式版中开放')">隐私承诺</a>
+        <a href="javascript:void(0)" onclick="toast('示例官网：该入口在正式版中开放')">联系我们</a>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© 2026 拾光记 · 把每个普通的日子，都收进时光里</span>
+      <span>v1.0 · 完全离线 · 数据不出设备</span>
+    </div>
+  </footer>
+
+</main>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=(s,c=document)=>c.querySelector(s);
+const $$=(s,c=document)=>[...c.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---- Toast ---- */
+let toastTimer;
+function toast(msg){
+  const t=$('#toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+/* ---- 平滑滚动引擎：桌面端惯性 lerp，触屏/减动效降级原生 ---- */
+const smooth=$('#smooth'),bodyEl=document.body,nav=$('#nav');
+const smoothOn=matchMedia('(hover:hover) and (pointer:fine)').matches&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(smoothOn)bodyEl.classList.add('smooth-on');
+else{document.documentElement.style.scrollBehavior='smooth';bodyEl.classList.add('no-motion');}
+let target=0,current=0,maxS=1;
+function measure(){
+  if(smoothOn)bodyEl.style.height=smooth.scrollHeight+'px';
+  maxS=Math.max(1,smooth.scrollHeight-innerHeight);
+  if(smoothOn)target=clamp(target,0,maxS);
+}
+addEventListener('resize',measure);
+addEventListener('load',()=>{measure();setTimeout(measure,400)});
+if(smoothOn){
+  addEventListener('wheel',e=>{
+    if(e.ctrlKey)return;
+    e.preventDefault();
+    let d=e.deltaY;
+    if(e.deltaMode===1)d*=33;else if(e.deltaMode===2)d*=innerHeight;
+    target=clamp(target+d,0,maxS);
+  },{passive:false});
+  addEventListener('scroll',()=>{target=clamp(scrollY,0,maxS)},{passive:true});
+}
+
+/* ---- 锚点导航 ---- */
+function goTo(id){
+  const el=id==='top'?$('#top'):document.getElementById(id);
+  if(!el)return;
+  if(smoothOn){target=clamp((id==='top'?0:el.offsetTop-70),0,maxS);}
+  else el.scrollIntoView({behavior:'smooth'});
+}
+$$('[data-to]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();goTo(a.dataset.to)}));
+
+/* ---- 主题引擎（与 App 原型 ThemeSpec 同源） ---- */
+const THEMES={
+  "t-warm":{name:"拾光暖阳",vars:{"--paper":"#FAF5EE","--paper-2":"#F3EADD","--card":"#FFFFFF","--ink":"#33291F","--ink-2":"#75675A","--ink-3":"#A6988A","--brand":"#C4663F","--brand-2":"#D97B54","--brand-soft":"#F8E7DC","--brand-soft-2":"#FBF1E9","--line":"rgba(80,58,38,.1)","--shadow":"0 10px 30px rgba(96,64,40,.09), 0 2px 6px rgba(96,64,40,.05)","--green-soft":"#ECF1E4","--green-tx":"#5C7A50","--amber-soft":"#FAEDDA","--amber-tx":"#B27327","--blue-soft":"#E6EFF4","--blue-tx":"#4F7B95","--purple-soft":"#EFEAF5","--purple-tx":"#7A6398","--rose-soft":"#F8E8E5","--rose-tx":"#A85248","--grad1":"#E8926A","--grad2":"#C4663F","--nav-bg":"rgba(250,245,238,.82)"}},
+  "t-night":{name:"月见夜话",vars:{"--paper":"#16131D","--paper-2":"#1F1B2A","--card":"#262033","--ink":"#EFE9F6","--ink-2":"#A89EBB","--ink-3":"#6F6584","--brand":"#D9A05B","--brand-2":"#E2B272","--brand-soft":"rgba(217,160,91,.16)","--brand-soft-2":"rgba(217,160,91,.08)","--line":"rgba(255,255,255,.09)","--shadow":"0 10px 30px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3)","--green-soft":"rgba(143,174,126,.16)","--green-tx":"#A9C79A","--amber-soft":"rgba(224,164,99,.16)","--amber-tx":"#EBBE85","--blue-soft":"rgba(127,166,196,.15)","--blue-tx":"#9EC2DC","--purple-soft":"rgba(167,148,201,.16)","--purple-tx":"#C0B0DE","--rose-soft":"rgba(208,133,120,.16)","--rose-tx":"#E2A094","--grad1":"#C98A3D","--grad2":"#A96A24","--nav-bg":"rgba(22,19,29,.8)"}},
+  "t-plum":{name:"青梅酿",vars:{"--paper":"#F1F4EA","--paper-2":"#E5EBD9","--card":"#FFFFFF","--ink":"#28301F","--ink-2":"#6C755D","--ink-3":"#9AA48B","--brand":"#5F7D4F","--brand-2":"#74955F","--brand-soft":"#E7EDDC","--brand-soft-2":"#F0F4E8","--line":"rgba(70,90,50,.1)","--shadow":"0 10px 30px rgba(70,95,50,.1), 0 2px 6px rgba(70,95,50,.05)","--green-soft":"#E7EDDC","--green-tx":"#54703F","--amber-soft":"#F4ECCE","--amber-tx":"#96812B","--blue-soft":"#E2ECF0","--blue-tx":"#4B7A8C","--purple-soft":"#EBE8F2","--purple-tx":"#7265A0","--rose-soft":"#F5E9E4","--rose-tx":"#B05C48","--grad1":"#8FAD6C","--grad2":"#5F7D4F","--nav-bg":"rgba(241,244,234,.85)"}},
+  "t-mist":{name:"雾蓝信笺",vars:{"--paper":"#EEF2F6","--paper-2":"#E1E8EF","--card":"#FFFFFF","--ink":"#232D38","--ink-2":"#5F6E7C","--ink-3":"#93A2B0","--brand":"#4E7A96","--brand-2":"#6390AC","--brand-soft":"#E1EBF1","--brand-soft-2":"#EDF3F7","--line":"rgba(45,65,85,.1)","--shadow":"0 10px 30px rgba(45,70,95,.1), 0 2px 6px rgba(45,70,95,.05)","--green-soft":"#E6EDE2","--green-tx":"#5C7A50","--amber-soft":"#F6EBD8","--amber-tx":"#A87B33","--blue-soft":"#E1EBF1","--blue-tx":"#406881","--purple-soft":"#EAE8F3","--purple-tx":"#6F63A0","--rose-soft":"#F6E7E7","--rose-tx":"#B05252","--grad1":"#6D9AB5","--grad2":"#436F8B","--nav-bg":"rgba(238,242,246,.85)"}},
+  "t-sakura":{name:"樱粉气泡",vars:{"--paper":"#FBF1F1","--paper-2":"#F5E3E5","--card":"#FFFFFF","--ink":"#342428","--ink-2":"#7C6266","--ink-3":"#AC9296","--brand":"#C05E6E","--brand-2":"#D47785","--brand-soft":"#F8E4E7","--brand-soft-2":"#FBEEF0","--line":"rgba(105,55,65,.1)","--shadow":"0 10px 30px rgba(120,60,75,.1), 0 2px 6px rgba(120,60,75,.05)","--green-soft":"#E8EFDF","--green-tx":"#5F7D50","--amber-soft":"#F7EBD6","--amber-tx":"#A87F35","--blue-soft":"#E3EDF2","--blue-tx":"#4E7A96","--purple-soft":"#EDE8F4","--purple-tx":"#7768A8","--rose-soft":"#F8E4E7","--rose-tx":"#A8485C","--grad1":"#DB8794","--grad2":"#BC5567","--nav-bg":"rgba(251,241,241,.85)"}}
+};
+let currentTheme="t-warm";
+function applyTheme(id,silent){
+  const t=THEMES[id];if(!t)return;
+  currentTheme=id;
+  document.documentElement.classList.add('theming');
+  for(const[k,v] of Object.entries(t.vars))document.documentElement.style.setProperty(k,v);
+  $$('.t-card').forEach(c=>c.classList.toggle('on',c.dataset.t===id));
+  setTimeout(()=>document.documentElement.classList.remove('theming'),620);
+  if(!silent)toast('已换上「'+t.name+'」');
+}
+$$('.t-card').forEach(c=>c.addEventListener('click',()=>applyTheme(c.dataset.t)));
+
+/* ---- 卡片聚光边光 ---- */
+$$('.f-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--mx',(e.clientX-r.left)+'px');
+    card.style.setProperty('--my',(e.clientY-r.top)+'px');
+  });
+});
+
+/* ---- 滚动渐入 ---- */
+const io=new IntersectionObserver(es=>es.forEach(en=>{
+  if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target)}
+}),{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+$$('[data-rv]').forEach(el=>io.observe(el));
+
+/* ---- 数字滚动 ---- */
+const ioNum=new IntersectionObserver(es=>es.forEach(en=>{
+  if(!en.isIntersecting)return;
+  ioNum.unobserve(en.target);
+  const el=en.target,end=+el.dataset.count,t0=performance.now();
+  requestAnimationFrame(function tick(t){
+    const p=Math.min(1,(t-t0)/1500),v=Math.round(end*(1-Math.pow(1-p,3)));
+    el.textContent=v;
+    if(p<1)requestAnimationFrame(tick);
+  });
+}),{threshold:.5});
+$$('[data-count]').forEach(el=>ioNum.observe(el));
+
+/* ---- 滚动联动：导航状态 / 视差 / 应用预览换屏 ---- */
+const heroPhone=$('#heroPhone'),scrollCue=$('#scrollCue');
+const scSec=$('#showcaseSec'),scSticky=$('#scSticky'),scFill=$('#scFill'),scIdx=$('#scIdx'),scPhone=$('#scPhone');
+const scBlocks=$$('#scSteps .sc-block'),scScreens=$$('#scPhone .scr');
+const spyLinks=$$('.nav-links a');
+const spySections=['features','showcase','stats','themes','download'].map(id=>document.getElementById(id));
+const ORDER=["p-home","p-detail","p-cats","p-whisper","p-memory","p-theme"];
+
+function updateShowcase(){
+  const r=scSec.getBoundingClientRect(),vh=innerHeight;
+  if(r.bottom<-100||r.top>vh+100)return;
+  const total=Math.max(1,r.height-vh);
+  const prog=clamp(-r.top/total,0,1);
+  scFill.style.height=(prog*100).toFixed(2)+'%';
+  if(smoothOn)scSticky.style.transform='translate3d(0,'+clamp(-r.top,0,total).toFixed(1)+'px,0)';
+  let idx=0;
+  for(let i=0;i<scBlocks.length;i++){if(scBlocks[i].getBoundingClientRect().top<=vh*.55)idx=i}
+  scBlocks.forEach((b,i)=>b.classList.toggle('on',i===idx));
+  scIdx.textContent='0'+(idx+1);
+  const id=scBlocks[idx].dataset.scr;
+  if(scPhone.dataset.page!==id){
+    scPhone.dataset.page=id;
+    scScreens.forEach(s=>s.classList.toggle('on',s.dataset.scr===id));
+  }
+}
+function update(cur){
+  nav.classList.toggle('solid',cur>36);
+  if(scrollCue){
+    const o=clamp(1-cur/130,0,1);
+    scrollCue.style.opacity=o;
+    scrollCue.style.pointerEvents=o<.05?'none':'';
+  }
+  if(smoothOn){
+    heroPhone.style.transform='translate3d(0,'+(cur*.1).toFixed(1)+'px,0)';
+  }
+  let spy=null;
+  for(const s of spySections){if(s.getBoundingClientRect().top<=130)spy=s.id}
+  spyLinks.forEach(a=>a.classList.toggle('on',a.dataset.spy===spy));
+  updateShowcase();
+}
+function raf(){
+  if(smoothOn){
+    current+=(target-current)*.088;
+    if(Math.abs(target-current)<.05)current=target;
+    smooth.style.transform='translate3d(0,'+(-current).toFixed(2)+'px,0)';
+  }else{
+    current=scrollY;
+  }
+  update(current);
+  requestAnimationFrame(raf);
+}
+measure();
+requestAnimationFrame(raf);
+</script>
+</body>
+</html>

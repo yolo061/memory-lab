@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- 数据库与设置随系统备份；照片体积大，走应用内「备份与恢复」 -->
+    <include domain="database" path="shiguangji.db" />
+    <include domain="sharedpref" path="." />
+</full-backup-content>

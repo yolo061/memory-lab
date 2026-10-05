@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ShiGuang" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/sg_paper</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- App 自己管理深浅色（主题包/页面级），禁止系统强制反向着色
+             —— 否则 ColorOS 深色模式会把橙色品牌色染成蓝灰 -->
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

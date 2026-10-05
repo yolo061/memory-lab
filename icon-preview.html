@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>拾光记 · 图标预览</title>
+<style>
+body{background:#EFE5D8;font-family:"Microsoft YaHei UI",sans-serif;display:flex;flex-direction:column;align-items:center;gap:36px;padding:50px;margin:0}
+h1{font-size:22px;color:#5A4636;letter-spacing:2px}
+.row{display:flex;align-items:flex-end;gap:44px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cell span{font-size:12px;color:#8A7460}
+svg{display:block}
+.demo-note{font-size:13px;color:#75675A;background:#FFF9F2;border:1px dashed #C4663F55;padding:10px 18px;border-radius:12px}
+</style></head>
+<body>
+<h1>拾光记 · 新图标预览</h1>
+<div class="row">
+  <div class="cell"><svg id="i1" width="180" height="180" viewBox="0 0 108 108"></svg><span>圆形裁切（OPPO）</span></div>
+  <div class="cell"><svg id="i2" width="180" height="180" viewBox="0 0 108 108" style="border-radius:30%"></svg><span>方圆裁切（小米）</span></div>
+  <div class="cell"><svg id="i3" width="96" height="96" viewBox="0 0 108 108" style="border-radius:50%"></svg><span>桌面 96px</span></div>
+  <div class="cell"><svg id="i4" width="48" height="48" viewBox="0 0 108 108" style="border-radius:50%"></svg><span>桌面 48px</span></div>
+</div>
+<div class="demo-note">两枚柔光圆在安全区外，任何裁切都只留氛围、不切主体</div>
+<script>
+const bg = `<defs><linearGradient id="g" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#E08A5C"/><stop offset=".52" stop-color="#C4663F"/><stop offset="1" stop-color="#A94F2F"/>
+</linearGradient></defs>
+<rect width="108" height="108" fill="url(#g)"/>
+<circle cx="82" cy="26" r="17" fill="#FFF6EE" opacity=".08"/>
+<circle cx="26" cy="90" r="23" fill="#FFF6EE" opacity=".06"/>
+<path d="M-10,74 L118,26 L118,34 L-10,82 Z" fill="#FFF6EE" opacity=".06"/>`;
+const fg = `
+<circle cx="54" cy="49" r="14" fill="#FFF6EE"/>
+<path d="M48,58 L60,58 L60,75.5 C60,78.8 56.7,80.5 54.2,78.6 L54,78.4 L53.8,78.6 C51.3,80.5 48,78.8 48,75.5 Z" fill="#FFF6EE"/>
+<g stroke="#FFF6EE" stroke-width="4.6" stroke-linecap="round">
+<path d="M54,26.5 L54,31.5"/><path d="M37,32 L40.8,35.8"/><path d="M71,32 L67.2,35.8"/>
+<path d="M29.5,49 L35.5,49"/><path d="M78.5,49 L72.5,49"/>
+</g>
+<circle cx="54" cy="54" r="36" fill="none" stroke="#000" stroke-opacity=".12" stroke-width=".8" stroke-dasharray="3 3"/>`;
+['i1','i2','i3','i4'].forEach(id=>{
+  document.getElementById(id).innerHTML = bg + fg;
+});
+</script>
+</body>
+</html>
